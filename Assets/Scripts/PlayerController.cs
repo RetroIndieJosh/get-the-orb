@@ -22,6 +22,11 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
     [SerializeField] private float m_jumpTimeMaxSec = 0.4f;
     [SerializeField] private float m_jumpTimeMinSec = 0.2f;
 
+    [SerializeField] private float m_maxCamJumpTilt = 30f;
+    [SerializeField] private float m_camJumpTiltSec = 0.5f;
+
+    private float m_initialJumpLookAngleX = 0f;
+
     private CharacterController m_controller = null;
     private Controls m_controls = null;
 
@@ -184,20 +189,36 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
     private void HandleButtonA()
     {
         if (m_buttonDownA) {
-            m_buttonTimeA += Time.deltaTime;
-
             if (m_isJumping == false && m_isGrounded) {
                 StartJump();
                 m_canJump = false;
             }
+
+            m_buttonTimeA += Time.deltaTime;
+            var t = Mathf.Min(1f, m_buttonTimeA / m_camJumpTiltSec);
+            m_eulerRotation.x = Mathf.Lerp(m_initialJumpLookAngleX, m_initialJumpLookAngleX + m_maxCamJumpTilt, t);
         } else {
             if (m_buttonTimeA > Mathf.Epsilon) {
                 m_canJump = true;
                 m_buttonTimeA = 0f;
+                StartCoroutine(RevertLookAngleX());
+                //m_eulerRotation.x = m_initialJumpLookAngleX;
             }
 
             if (m_isJumping && m_jumpTime >= m_jumpTimeMinSec)
                 m_isJumping = false;
+        }
+    }
+
+    IEnumerator RevertLookAngleX()
+    {
+        var timeElapsed = 0f;
+        var curAngle = m_eulerRotation.x;
+        while (timeElapsed < m_camJumpTiltSec) {
+            timeElapsed += Time.deltaTime;
+            var t = Mathf.Min(1f, timeElapsed / m_camJumpTiltSec);
+            m_eulerRotation.x = Mathf.Lerp(curAngle, m_initialJumpLookAngleX, t);
+            yield return null;
         }
     }
 
@@ -287,5 +308,7 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
         m_isGrounded = false;
         m_isJumping = true;
         m_jumpSpeed = m_jumpSpeedMax;
+
+        m_initialJumpLookAngleX = m_eulerRotation.x;
     }
 }
