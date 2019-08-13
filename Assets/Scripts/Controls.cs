@@ -56,6 +56,22 @@ public class Controls : IInputActionCollection
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Restart"",
+                    ""type"": ""Button"",
+                    ""id"": ""9838b2a7-c563-4240-95a9-ca3a2464d6be"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""Invert"",
+                    ""type"": ""Button"",
+                    ""id"": ""e36ded58-47dd-4a98-9768-b4b4eebbdca1"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -344,6 +360,50 @@ public class Controls : IInputActionCollection
                     ""action"": ""Button B"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4c411221-dfb2-4383-af27-284fa31140a1"",
+                    ""path"": ""<Gamepad>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Restart"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2b31f36e-81ea-4616-a93b-0f040ac2e473"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Restart"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5a1dd76f-5a07-44d2-b8a6-776ff531f7dd"",
+                    ""path"": ""<Gamepad>/select"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Invert"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e3281fb7-2802-479d-a584-788db69f3cf0"",
+                    ""path"": ""<Keyboard>/tab"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Invert"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -357,6 +417,8 @@ public class Controls : IInputActionCollection
         m_Movement_Dash = m_Movement.GetAction("Dash");
         m_Movement_ButtonA = m_Movement.GetAction("Button A");
         m_Movement_ButtonB = m_Movement.GetAction("Button B");
+        m_Movement_Restart = m_Movement.GetAction("Restart");
+        m_Movement_Invert = m_Movement.GetAction("Invert");
     }
 
     ~Controls()
@@ -411,6 +473,8 @@ public class Controls : IInputActionCollection
     private readonly InputAction m_Movement_Dash;
     private readonly InputAction m_Movement_ButtonA;
     private readonly InputAction m_Movement_ButtonB;
+    private readonly InputAction m_Movement_Restart;
+    private readonly InputAction m_Movement_Invert;
     public struct MovementActions
     {
         private Controls m_Wrapper;
@@ -420,6 +484,8 @@ public class Controls : IInputActionCollection
         public InputAction @Dash => m_Wrapper.m_Movement_Dash;
         public InputAction @ButtonA => m_Wrapper.m_Movement_ButtonA;
         public InputAction @ButtonB => m_Wrapper.m_Movement_ButtonB;
+        public InputAction @Restart => m_Wrapper.m_Movement_Restart;
+        public InputAction @Invert => m_Wrapper.m_Movement_Invert;
         public InputActionMap Get() { return m_Wrapper.m_Movement; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -444,6 +510,12 @@ public class Controls : IInputActionCollection
                 ButtonB.started -= m_Wrapper.m_MovementActionsCallbackInterface.OnButtonB;
                 ButtonB.performed -= m_Wrapper.m_MovementActionsCallbackInterface.OnButtonB;
                 ButtonB.canceled -= m_Wrapper.m_MovementActionsCallbackInterface.OnButtonB;
+                Restart.started -= m_Wrapper.m_MovementActionsCallbackInterface.OnRestart;
+                Restart.performed -= m_Wrapper.m_MovementActionsCallbackInterface.OnRestart;
+                Restart.canceled -= m_Wrapper.m_MovementActionsCallbackInterface.OnRestart;
+                Invert.started -= m_Wrapper.m_MovementActionsCallbackInterface.OnInvert;
+                Invert.performed -= m_Wrapper.m_MovementActionsCallbackInterface.OnInvert;
+                Invert.canceled -= m_Wrapper.m_MovementActionsCallbackInterface.OnInvert;
             }
             m_Wrapper.m_MovementActionsCallbackInterface = instance;
             if (instance != null)
@@ -463,6 +535,12 @@ public class Controls : IInputActionCollection
                 ButtonB.started += instance.OnButtonB;
                 ButtonB.performed += instance.OnButtonB;
                 ButtonB.canceled += instance.OnButtonB;
+                Restart.started += instance.OnRestart;
+                Restart.performed += instance.OnRestart;
+                Restart.canceled += instance.OnRestart;
+                Invert.started += instance.OnInvert;
+                Invert.performed += instance.OnInvert;
+                Invert.canceled += instance.OnInvert;
             }
         }
     }
@@ -474,5 +552,7 @@ public class Controls : IInputActionCollection
         void OnDash(InputAction.CallbackContext context);
         void OnButtonA(InputAction.CallbackContext context);
         void OnButtonB(InputAction.CallbackContext context);
+        void OnRestart(InputAction.CallbackContext context);
+        void OnInvert(InputAction.CallbackContext context);
     }
 }

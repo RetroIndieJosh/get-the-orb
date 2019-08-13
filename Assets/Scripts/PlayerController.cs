@@ -2,10 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent, RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour, Controls.IMovementActions
 {
+    [SerializeField] private TextMeshProUGUI m_gameOverTextMesh = null;
+
     [SerializeField] private float m_doubleTapTimeSec = 0.1f;
     [SerializeField] private float m_maxForwardSpeed = 1.3f;
     [SerializeField] private float m_strafeSpeed = 1f;
@@ -17,18 +21,22 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
     [SerializeField] private float m_lookHoldTime = 0.3f;
 
     [SerializeField] private float m_gravityAccel = 9.8f;
-    //[SerializeField] private float m_jumpPeakHeight = 5f;
     [SerializeField] private float m_jumpSpeedMax = 2f;
     [SerializeField] private float m_jumpTimeMaxSec = 0.4f;
     [SerializeField] private float m_jumpTimeMinSec = 0.2f;
 
     [SerializeField] private float m_maxCamJumpTilt = 30f;
     [SerializeField] private float m_camJumpTiltSec = 0.5f;
+    [SerializeField] private float m_maxVerticalLookAngle = 60f;
+
+    public bool hasOrb = false;
 
     private float m_initialJumpLookAngleX = 0f;
 
     private CharacterController m_controller = null;
     private Controls m_controls = null;
+
+    private float m_jumpTime = 0f;
 
     private float m_gravityVel = 0f;
 
@@ -122,11 +130,39 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
 
     private void Start()
     {
+        m_gameOverTextMesh.enabled = false;
         m_controller = GetComponent<CharacterController>();
+    }
+
+    IEnumerator GameOver()
+    {
+        m_gameOverTextMesh.enabled = true;
+        m_gameOverTextMesh.text = "GAME OVER";
+        yield return new WaitForSeconds(3);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    IEnumerator ToggleInvert()
+    {
+        m_gameOverTextMesh.enabled = true;
+        m_invertLookY = !m_invertLookY;
+        if (m_invertLookY)
+            m_gameOverTextMesh.text = "INVERT Y";
+        else
+            m_gameOverTextMesh.text = "NO INVERT Y";
+        yield return new WaitForSeconds(1);
+        m_gameOverTextMesh.enabled = false;
     }
 
     private void Update()
     {
+        Cursor.visible = false;
+
+        if (transform.position.y < -1)
+            StartCoroutine(GameOver());
+
+        CheckGround();
+
         HandleButtonA();
         HandleButtonB();
 
@@ -141,7 +177,12 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
         UpdateController();
     }
 
-    private float m_jumpTime = 0f;
+    private void CheckGround()
+    {
+        var checkDistance = m_controller.height * 0.5f + m_groundDistance;
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, checkDistance) == false)
+            m_isGrounded = false;
+    }
 
     private void HandleJump()
     {
@@ -164,6 +205,7 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
 
     private void UpdateController()
     {
+        m_eulerRotation.x = Mathf.Clamp(m_eulerRotation.x, -m_maxVerticalLookAngle, m_maxVerticalLookAngle);
         transform.rotation = Quaternion.Euler(m_eulerRotation);
 
         var collisionFlags = m_controller.Move(m_move);
@@ -202,7 +244,6 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
                 m_canJump = true;
                 m_buttonTimeA = 0f;
                 StartCoroutine(RevertLookAngleX());
-                //m_eulerRotation.x = m_initialJumpLookAngleX;
             }
 
             if (m_isJumping && m_jumpTime >= m_jumpTimeMinSec)
@@ -310,5 +351,18 @@ public class PlayerController : MonoBehaviour, Controls.IMovementActions
         m_jumpSpeed = m_jumpSpeedMax;
 
         m_initialJumpLookAngleX = m_eulerRotation.x;
+    }
+
+    public void OnRestart(InputAction.CallbackContext context)
+    {
+        if (hasOrb == false)
+            return;
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    public void OnInvert(InputAction.CallbackContext context)
+    {
+        StartCoroutine(ToggleInvert());
     }
 }
